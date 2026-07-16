@@ -3,342 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Behavior Management System</title>
-    <!-- Tailwind CSS for modern utility styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js for behavioral reports -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        darkBg: '#090d16',
-                        panelBg: '#111827',
-                        accentBlue: '#38bdf8',
-                        accentPurple: '#a855f7',
-                        accentGreen: '#10b981',
-                        accentRed: '#f43f5e'
-                    }
-                }
-            }
-        }
-    </script>
+    <title>Behavioral Monitoring Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="bg-darkBg text-gray-100 min-h-screen font-sans">
+<body>
 
-    <!-- Top Navigation Bar -->
-    <nav class="border-b border-gray-800 bg-panelBg/80 backdrop-blur px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center space-x-8">
-            <div class="flex items-center space-x-3">
-                <span class="text-2xl">🛡️</span>
-                <span class="font-bold text-lg tracking-wider bg-gradient-to-r from-accentBlue to-accentPurple bg-clip-text text-transparent">
-                    BEHAVIORAL AI PORTAL
-                </span>
-            </div>
-            <!-- Interactive Navigation Tabs -->
-            <div class="hidden md:flex space-x-1 bg-gray-900 p-1 rounded-xl border border-gray-800">
-                <button onclick="switchTab('monitor')" id="tab-monitor" class="px-4 py-2 text-xs font-bold rounded-lg transition bg-accentBlue/10 text-accentBlue">
-                    📺 Live Monitor
-                </button>
-                <button onclick="switchTab('roster')" id="tab-roster" class="px-4 py-2 text-xs font-bold rounded-lg transition text-gray-400 hover:text-white">
-                    👥 Student Roster
-                </button>
-            </div>
-        </div>
-        <div class="flex items-center space-x-4">
-            <span class="flex items-center space-x-2 bg-accentGreen/10 text-accentGreen text-xs px-3 py-1.5 rounded-full border border-accentGreen/20 font-semibold">
-                <span class="w-2.5 h-2.5 bg-accentGreen rounded-full animate-ping mr-1"></span>
-                AI ENGINE ONLINE
-            </span>
-            <div class="w-8 h-8 rounded-full bg-gray-700 border border-gray-600 flex items-center justify-center font-bold text-sm text-accentBlue">
-                T
-            </div>
-        </div>
-    </nav>
+    <div class="dashboard-container">
+        <header>
+            <h1>Behavioral AI Monitoring Dashboard</h1>
+            <p class="subtitle">Live Portal connected to PostgreSQL via FastAPI</p>
+        </header>
 
-    <!-- TAB 1: MONITOR & ALERTS WORKSPACE -->
-    <main id="view-monitor" class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- COLUMN 1: LIVE FEED & ALERTS (Left - 7 Columns) -->
-        <section class="lg:col-span-7 space-y-6">
-            
-            <!-- Live Web Camera Box -->
-            <div class="bg-panelBg border border-gray-800 rounded-2xl overflow-hidden shadow-2xl relative">
-                <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
-                    <span class="text-sm font-semibold text-gray-300">Live Classroom Feed (Webcam)</span>
-                    <span class="text-xs text-gray-500 font-mono">1080p • 30 FPS</span>
-                </div>
-                <div class="aspect-video bg-black flex items-center justify-center relative">
-                    <!-- Simulate Video Frame Skeletons[cite: 1] -->
-                    <div class="absolute inset-0 opacity-40 flex items-center justify-center pointer-events-none">
-                        <div class="border border-dashed border-accentBlue/40 w-44 h-56 rounded absolute left-10 top-12 flex items-end justify-center pb-2">
-                            <span class="text-[10px] text-accentBlue font-mono">Seat 1: Active</span>
-                        </div>
-                        <div class="border border-dashed border-accentBlue/40 w-44 h-56 rounded absolute right-12 top-12 flex items-end justify-center pb-2">
-                            <span class="text-[10px] text-accentBlue font-mono">Seat 2: Active</span>
-                        </div>
-                    </div>
-                    <span class="text-gray-600 font-mono text-sm">[Webcam Stream Active]</span>
-                </div>
-            </div>
+        <main>
+            <table id="alert-table">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Violation Type</th>
+                        <th>Timestamp</th>
+                        <th>Evidence Screenshot</th>
+                    </tr>
+                </thead>
+                <tbody id="alert-log-rows">
+                    <!-- Logs will load here dynamically -->
+                </tbody>
+            </table>
+        </main>
+    </div>
 
-            <!-- Pending Alerts Stream[cite: 1] -->
-            <div class="bg-panelBg border border-gray-800 rounded-2xl p-5 space-y-4">
-                <h2 class="text-md font-bold tracking-wide text-gray-300 border-b border-gray-800 pb-3 flex justify-between items-center">
-                    <span>PENDING VERIFICATIONS</span>
-                    <span id="alert-count" class="bg-accentRed/10 text-accentRed text-xs px-2.5 py-0.5 rounded-full font-bold">2</span>
-                </h2>
-                
-                <div id="alerts-container" class="space-y-3">
-                    <!-- Alert Card 1 -->
-                    <div class="bg-gray-900/60 border border-gray-800 p-4 rounded-xl flex justify-between items-center hover:border-accentRed/30 transition">
-                        <div>
-                            <span class="text-xs text-accentRed font-bold tracking-wider uppercase">Leaving Seat Alert</span>
-                            <h3 class="font-semibold text-white text-sm mt-0.5">Student #3 (Row 2, Seat B)</h3>
-                            <p class="text-xs text-gray-400 mt-1">Duration: > 8 seconds | Confidence: 94%</p>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button onclick="handleAlert(this, 'confirm')" class="bg-accentGreen/10 hover:bg-accentGreen text-accentGreen hover:text-darkBg px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                                Confirm
-                            </button>
-                            <button onclick="handleAlert(this, 'reject')" class="bg-gray-800 hover:bg-accentRed text-gray-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                                Reject
-                            </button>
-                        </div>
-                    </div>
+    <!-- Image Modal (Pop-up Viewer) -->
+    <div id="image-modal" class="modal">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modal-img">
+        <div id="modal-caption"></div>
+    </div>
 
-                    <!-- Alert Card 2 -->
-                    <div class="bg-gray-900/60 border border-gray-800 p-4 rounded-xl flex justify-between items-center hover:border-accentPurple/30 transition">
-                        <div>
-                            <span class="text-xs text-accentPurple font-bold tracking-wider uppercase">Hand Raised Detected</span>
-                            <h3 class="font-semibold text-white text-sm mt-0.5">Student #1 (Row 1, Seat A)</h3>
-                            <p class="text-xs text-gray-400 mt-1">Duration: 2.1 seconds | Confidence: 98%</p>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button onclick="handleAlert(this, 'confirm')" class="bg-accentGreen/10 hover:bg-accentGreen text-accentGreen hover:text-darkBg px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                                Confirm
-                            </button>
-                            <button onclick="handleAlert(this, 'reject')" class="bg-gray-800 hover:bg-accentRed text-gray-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                                Reject
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- COLUMN 2: ANALYTICS & HISTORY -->
-        <section class="lg:col-span-5 space-y-6">
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-panelBg border border-gray-800 p-4 rounded-2xl">
-                    <span class="text-xs text-gray-400 uppercase tracking-wider block">Daily Confirmed</span>
-                    <span id="confirmed-counter" class="text-2xl font-bold text-accentBlue mt-1 block">18</span>
-                </div>
-                <div class="bg-panelBg border border-gray-800 p-4 rounded-2xl">
-                    <span class="text-xs text-gray-400 uppercase tracking-wider block">Active Zones</span>
-                    <span class="text-2xl font-bold text-accentPurple mt-1 block">4 Zones</span>
-                </div>
-            </div>
-
-            <div class="bg-panelBg border border-gray-800 rounded-2xl p-5">
-                <h2 class="text-sm font-bold tracking-wide text-gray-300 mb-4 uppercase">Behavior Distribution</h2>
-                <div class="h-48 w-full">
-                    <canvas id="metricsChart"></canvas>
-                </div>
-            </div>
-
-            <div class="bg-panelBg border border-gray-800 rounded-2xl p-5">
-                <h2 class="text-sm font-bold tracking-wide text-gray-300 mb-3 uppercase">Session Log</h2>
-                <div id="session-log" class="space-y-2 h-44 overflow-y-auto text-xs font-mono text-gray-400">
-                    <div>[13:30:11] Log initialized. Ready to receive behavioral payloads.</div>
-                    <div>[13:30:45] Tracked ID #1 assigned to Zone 1.</div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- TAB 2: STUDENT ROSTER INTERFACE -->
-    <main id="view-roster" class="max-w-7xl mx-auto p-6 hidden">
-        <div class="bg-panelBg border border-gray-800 rounded-2xl p-6 shadow-2xl">
-            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-800">
-                <div>
-                    <h2 class="text-xl font-bold tracking-wide text-white">Student Roster</h2>
-                    <p class="text-xs text-gray-400 mt-1">Classroom configuration and performance indices[cite: 1].</p>
-                </div>
-                <button class="bg-accentBlue/10 hover:bg-accentBlue text-accentBlue hover:text-darkBg px-4 py-2 rounded-xl text-xs font-bold transition">
-                    + Register Student
-                </button>
-            </div>
-
-            <!-- Modern Table Interface -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-gray-800 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            <th class="py-3 px-4">Student</th>
-                            <th class="py-3 px-4">Registration ID</th>
-                            <th class="py-3 px-4">Assigned Seat</th>
-                            <th class="py-3 px-4">Behavior Score</th>
-                            <th class="py-3 px-4">Status</th>
-                            <th class="py-3 px-4 text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm text-gray-300 divide-y divide-gray-800/50">
-                        <!-- Student row 1 -->
-                        <tr class="hover:bg-gray-900/30 transition">
-                            <td class="py-4 px-4 flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded-full bg-accentPurple/20 text-accentPurple flex items-center justify-center font-bold text-xs">
-                                    AH
-                                </div>
-                                <span class="font-semibold text-white">Alex Henderson</span>
-                            </td>
-                            <td class="py-4 px-4 font-mono text-xs text-gray-400">REG-2026-0041</td>
-                            <td class="py-4 px-4"><span class="bg-gray-800 text-gray-300 text-xs px-2.5 py-1 rounded-lg">Zone 1 (Row 1, Seat A)</span></td>
-                            <td class="py-4 px-4">
-                                <span class="text-accentGreen font-bold">98 pts</span>
-                            </td>
-                            <td class="py-4 px-4">
-                                <span class="bg-accentGreen/10 text-accentGreen text-[10px] font-bold px-2 py-1 rounded-full uppercase">Attentive</span>
-                            </td>
-                            <td class="py-4 px-4 text-right">
-                                <button class="text-xs text-accentBlue hover:underline">View Profile</button>
-                            </td>
-                        </tr>
-
-                        <!-- Student row 2 -->
-                        <tr class="hover:bg-gray-900/30 transition">
-                            <td class="py-4 px-4 flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded-full bg-accentBlue/20 text-accentBlue flex items-center justify-center font-bold text-xs">
-                                    SM
-                                </div>
-                                <span class="font-semibold text-white">Sarah Miller</span>
-                            </td>
-                            <td class="py-4 px-4 font-mono text-xs text-gray-400">REG-2026-0042</td>
-                            <td class="py-4 px-4"><span class="bg-gray-800 text-gray-300 text-xs px-2.5 py-1 rounded-lg">Zone 2 (Row 1, Seat B)</span></td>
-                            <td class="py-4 px-4">
-                                <span class="text-yellow-500 font-bold">85 pts</span>
-                            </td>
-                            <td class="py-4 px-4">
-                                <span class="bg-yellow-500/10 text-yellow-500 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Warned</span>
-                            </td>
-                            <td class="py-4 px-4 text-right">
-                                <button class="text-xs text-accentBlue hover:underline">View Profile</button>
-                            </td>
-                        </tr>
-
-                        <!-- Student row 3 -->
-                        <tr class="hover:bg-gray-900/30 transition">
-                            <td class="py-4 px-4 flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded-full bg-accentRed/20 text-accentRed flex items-center justify-center font-bold text-xs">
-                                    JD
-                                </div>
-                                <span class="font-semibold text-white">John Doe</span>
-                            </td>
-                            <td class="py-4 px-4 font-mono text-xs text-gray-400">REG-2026-0043</td>
-                            <td class="py-4 px-4"><span class="bg-gray-800 text-gray-300 text-xs px-2.5 py-1 rounded-lg">Zone 3 (Row 2, Seat B)</span></td>
-                            <td class="py-4 px-4">
-                                <span class="text-accentRed font-bold">62 pts</span>
-                            </td>
-                            <td class="py-4 px-4">
-                                <span class="bg-accentRed/10 text-accentRed text-[10px] font-bold px-2 py-1 rounded-full uppercase">Suspended</span>
-                            </td>
-                            <td class="py-4 px-4 text-right">
-                                <button class="text-xs text-accentBlue hover:underline">View Profile</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-
-    <!-- JavaScript Navigation and Interactions -->
     <script>
-        // Switch between Roster view and Live view
-        function switchTab(target) {
-            const monitorView = document.getElementById('view-monitor');
-            const rosterView = document.getElementById('view-roster');
-            const tabMonitor = document.getElementById('tab-monitor');
-            const tabRoster = document.getElementById('tab-roster');
+        // Adjust this port if Bilal's FastAPI uses something other than 8000
+        const FASTAPI_URL = "http://127.0.0.1:8000/behavior-log/";
 
-            if (target === 'monitor') {
-                monitorView.classList.remove('hidden');
-                rosterView.classList.add('hidden');
-                tabMonitor.className = "px-4 py-2 text-xs font-bold rounded-lg transition bg-accentBlue/10 text-accentBlue";
-                tabRoster.className = "px-4 py-2 text-xs font-bold rounded-lg transition text-gray-400 hover:text-white";
-            } else {
-                monitorView.classList.add('hidden');
-                rosterView.classList.remove('hidden');
-                tabMonitor.className = "px-4 py-2 text-xs font-bold rounded-lg transition text-gray-400 hover:text-white";
-                tabRoster.className = "px-4 py-2 text-xs font-bold rounded-lg transition bg-accentBlue/10 text-accentBlue";
+        async function fetchLatestLogs() {
+            try {
+                const response = await fetch(FASTAPI_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const logs = await response.json();
+                updateDashboard(logs);
+            } catch (error) {
+                console.error("Error fetching live data from FastAPI:", error);
             }
         }
 
-        // Handle Interactive Confirm/Reject Actions
-        function handleAlert(buttonElement, action) {
-            const card = buttonElement.closest('.bg-gray-900\\/60');
-            const alertCountBadge = document.getElementById('alert-count');
-            const confirmedCounter = document.getElementById('confirmed-counter');
-            const logBox = document.getElementById('session-log');
-            
-            const now = new Date().toTimeString().split(' ')[0];
-            const logLine = document.createElement('div');
-            
-            if (action === 'confirm') {
-                logLine.innerHTML = `[${now}] <span class="text-accentGreen">Confirmed: Behavioral event logged to database successfully.</span>`;
-                let count = parseInt(confirmedCounter.innerText);
-                confirmedCounter.innerText = count + 1;
-            } else {
-                logLine.innerHTML = `[${now}] <span class="text-accentRed">Rejected: False positive ignored by teacher.</span>`;
-            }
-            
-            logBox.prepend(logLine);
+        function updateDashboard(logs) {
+            const tableBody = document.getElementById("alert-log-rows");
+            tableBody.innerHTML = ""; 
 
-            // Remove card with fade transition
-            card.style.opacity = '0';
-            card.style.transition = 'opacity 0.3s ease';
-            setTimeout(() => {
-                card.remove();
-                let activeAlerts = document.getElementById('alerts-container').children.length;
-                alertCountBadge.innerText = activeAlerts;
-                if (activeAlerts === 0) {
-                    alertCountBadge.classList.add('hidden');
+            logs.forEach(log => {
+                const row = document.createElement("tr");
+
+                // Format the Vision Engine's timestamp: "20260716_124135" -> "2026-07-16 12:41:35"
+                const t = log.timestamp;
+                let formattedTime = t;
+                if (t && t.length >= 15) {
+                    formattedTime = `${t.substring(0,4)}-${t.substring(4,6)}-${t.substring(6,8)} ${t.substring(9,11)}:${t.substring(11,13)}:${t.substring(13,15)}`;
                 }
-            }, 300);
+
+                // Route absolute image path through our Flask secure file server
+                const safeImgSrc = `/local-evidence/${encodeURIComponent(log.evidence_path)}`;
+
+                row.innerHTML = `
+                    <td class="student-id"><strong>${log.student_id}</strong></td>
+                    <td><span class="badge ${log.violation.toLowerCase()}">${log.violation.toUpperCase()}</span></td>
+                    <td>${formattedTime}</td>
+                    <td>
+                        <button class="view-btn" onclick="openModal('${safeImgSrc}', '${log.student_id}')">
+                            View Evidence
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
         }
 
-        // Initialize Chart.js Behavior Distribution Plot[cite: 1]
-        const ctx = document.getElementById('metricsChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Hand Raise', 'Left Seat', 'Phone Use', 'Sleeping'],
-                datasets: [{
-                    label: 'Events Verified',
-                    data: [12, 5, 2, 0],
-                    backgroundColor: ['#a855f7', '#f43f5e', '#38bdf8', '#10b981'],
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        grid: { color: '#1f2937' },
-                        ticks: { color: '#9ca3af' }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#9ca3af' }
-                    }
-                }
+        function openModal(imageSrc, studentId) {
+            const modal = document.getElementById("image-modal");
+            const modalImg = document.getElementById("modal-img");
+            const captionText = document.getElementById("modal-caption");
+            
+            modal.style.display = "block";
+            modalImg.src = imageSrc;
+            captionText.innerHTML = `Violation screenshot captured for: <strong>${studentId}</strong>`;
+        }
+
+        function closeModal() {
+            document.getElementById("image-modal").style.display = "none";
+        }
+
+        // Close modal if user clicks outside of image frame
+        window.onclick = function(event) {
+            const modal = document.getElementById("image-modal");
+            if (event.target == modal) {
+                modal.style.display = "none";
             }
-        });
+        }
+
+        // Auto-refresh the dashboard logs every 5 seconds
+        setInterval(fetchLatestLogs, 5000);
+        // Load logs immediately on page load
+        fetchLatestLogs();
     </script>
 </body>
 </html>
